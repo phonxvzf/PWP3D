@@ -2,6 +2,10 @@ cmake_minimum_required( VERSION 2.8 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/")
 
+find_package(OpenCV REQUIRED core imgproc features2d flann calib3d objdetect
+  highgui ml video
+)
+
 # Build Configures
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall ")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -19,7 +23,7 @@ endif()
 option(BUILD_SHARED_LIBS "Build Shared Library" ON)
 add_subdirectory(PerseusLib)
 
-option(BUILD_PWP3D_APP "Build PWP3D App" OFF)
+option(BUILD_PWP3D_APP "Build PWP3D App" ON)
 if(BUILD_PWP3D_APP)
   add_subdirectory(Application)
 endif()
