@@ -118,7 +118,10 @@ void clean_gl() {
 struct draw_data {
   cv::Mat *frame;
   cv::Mat *extrinsic_rot;
+
   float *extrinsic_trans;
+  float camera_fx, camera_fy;
+  float camera_cx, camera_cy;
 
   bool ready = false;
 
@@ -176,11 +179,19 @@ void draw_gl(void *params) {
   model_shader->use();
   const GLint u_model_loc = glGetUniformLocation(model_shader->program(), "u_model");
   const GLint u_view_loc = glGetUniformLocation(model_shader->program(), "u_view");
+  const GLint u_intrinsic_loc = glGetUniformLocation(model_shader->program(), "u_intrinsic");
   const GLint u_extrinsic_rot_loc = glGetUniformLocation(model_shader->program(), "u_extrinsic_rot");
   const GLint u_extrinsic_trans_loc = glGetUniformLocation(model_shader->program(), "u_extrinsic_trans");
 
   glm::mat4 view_mat(1.0f);
   glm::mat4 model_mat(1.0f);
+  glm::mat3 intrinsic_mat(0.0f);
+
+  intrinsic_mat[0][0] = draw_data_ctrl.camera_fx;
+  intrinsic_mat[1][1] = draw_data_ctrl.camera_fy;
+  intrinsic_mat[0][2] = draw_data_ctrl.camera_cx;
+  intrinsic_mat[1][2] = draw_data_ctrl.camera_cy;
+  intrinsic_mat[2][2] = 1.0f;
 
   const float rx = glm::radians(draw_data_ctrl.rot_x);
   const float ry = glm::radians(draw_data_ctrl.rot_y);
@@ -200,6 +211,7 @@ void draw_gl(void *params) {
   glUniformMatrix4fv(u_model_loc, 1, GL_FALSE, glm::value_ptr(model_mat));
   glUniformMatrix4fv(u_view_loc, 1, GL_FALSE, glm::value_ptr(view_mat));
   glUniformMatrix3fv(u_extrinsic_rot_loc, 1, GL_TRUE, glm::value_ptr(extrinsic_rot_mat));
+  glUniformMatrix3fv(u_intrinsic_loc, 1, GL_TRUE, glm::value_ptr(intrinsic_mat));
   glUniform3fv(u_extrinsic_trans_loc, 1, glm::value_ptr(extrinsic_trans_vec));
 
   object_model->draw();
@@ -207,6 +219,21 @@ void draw_gl(void *params) {
 
   // disable wireframe mode
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void read_calib(const std::string& file_path) {
+  FILE* f = std::fopen(file_path.c_str(), "r");
+  if (f == nullptr) {
+    std::cerr << "[ERROR] Could not open camera calibration file" << std::endl;
+    std::exit(1);
+  }
+
+  int w, h;
+  fscanf(f, "Perseus_CalFile\n%d %d\n", &w, &h);
+  fscanf(f, "%f%f%f%f",
+      &draw_data_ctrl.camera_fx, &draw_data_ctrl.camera_fy,
+      &draw_data_ctrl.camera_cx, &draw_data_ctrl.camera_cy);
+  std::fclose(f);
 }
 
 int main(int argc, char** argv) {
@@ -221,6 +248,8 @@ int main(int argc, char** argv) {
   std::string mask_path(argv[4]);
   std::string hist_path(argv[5]);
   std::string hist_mask_path(argv[6]);
+
+  read_calib(calib_path);
 
   cv::namedWindow(MONITOR_TITLE, cv::WINDOW_KEEPRATIO | cv::WINDOW_OPENGL);
   cv::namedWindow(CTRL_TITLE, cv::WINDOW_GUI_EXPANDED);

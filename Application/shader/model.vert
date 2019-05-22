@@ -6,6 +6,7 @@ in vec3 in_normal;
 uniform mat3 u_extrinsic_rot;
 uniform mat4 u_model;
 uniform mat4 u_view;
+uniform mat3 u_intrinsic;
 uniform vec3 u_extrinsic_trans;
 
 //mat3 intrinsic = mat3(
@@ -14,11 +15,11 @@ uniform vec3 u_extrinsic_trans;
 //    3.1930978114340189e+02, 2.3191340221795991e+02, 1 // col 2 (cx, cy)
 //    );
 
-mat3 intrinsic = mat3(
-    827.03599, 0, 0, // col 0 (fx)
-    0, 821.06273, 0, // col 1 (fy)
-    329.14773, 186.90243, 1 // col 2 (cx, cy)
-    );
+//mat3 intrinsic = mat3(
+//    827.03599, 0, 0, // col 0 (fx)
+//    0, 821.06273, 0, // col 1 (fy)
+//    329.14773, 186.90243, 1 // col 2 (cx, cy)
+//    );
 
 // tangential distortion coefficients
 //vec2 p = vec2(-9.6922955423738855e-03, 4.0017843969807613e-04);
@@ -45,7 +46,7 @@ void main() {
   pos.z = 1.0;
 
   // undistort
-  pos = intrinsic * pos;
+  pos = u_intrinsic * pos;
 
   // convert to GL coordinates
   pos.x = (pos.x - 320) / 320;
