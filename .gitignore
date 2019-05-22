@@ -13,3 +13,6 @@ _deps
 rocket
 .ccls-cache
 *.so
+PWP3DAPP
+Application/PWP3DAPP
+Files/Results/*.png

@@ -7,22 +7,6 @@ using namespace Perseus::Utils;
 
 int main(int argc, char** argv)
 {
-  //  std::string sModelPath = "/Users/luma/Code/Luma/PWP3D/Files/Models/Renderer/long.obj";
-  //  std::string sSrcImage = "/Users/luma/Code/Luma/PWP3D/Files/Images/Red.png";
-  //  std::string sCameraMatrix = "/Users/luma/Code/Luma/PWP3D/Files/CameraCalibration/900nc.cal";
-  //  std::string sTargetMask = "/Users/luma/Code/Luma/PWP3D/Files/Masks/480p_All_VideoMask.png";
-  //  std::string sHistSrc = "/Users/luma/Code/Luma/PWP3D/Files/Masks/Red_Source.png";
-  //  std::string sHistMask = "/Users/luma/Code/Luma/PWP3D/Files/Masks/Red_Mask.png";
-
-
-  // blue car demo
-  //  std::string sModelPath = "/Users/luma/Code/DataSet/Mesh/BlueCar.obj";
-  //  std::string sSrcImage = "/Users/luma/Code/Luma/PWP3D/Files/Images/248-LiveRGB.png";
-  //  std::string sCameraMatrix = "/Users/luma/Code/Luma/PWP3D/Files/CameraCalibration/Kinect.cal";
-  //  std::string sTargetMask = "/Users/luma/Code/Luma/PWP3D/Files/Masks/480p_All_VideoMask.png";
-  //  std::string sHistSrc = "/Users/luma/Code/Luma/PWP3D/Files/Images/248-LiveRGB.png";
-  //  std::string sHistMask = "/Users/luma/Code/Luma/PWP3D/Files/Masks/248-ID-3-LiveImage.png";
-
   std::string sModelPath(argv[1]);
   std::string sSrcImage(argv[2]);
   std::string sCameraMatrix(argv[3]);
@@ -69,18 +53,17 @@ int main(int argc, char** argv)
   //videoMask = 24 bit black/white png - white represents parts of the image that are usable
   std::cout<<"\n==[APP] Init Target ROI =="<<std::endl;
   ImageUtils::Instance()->LoadImageFromFile(views[viewIdx]->videoMask,
-                                            (char*)sTargetMask.c_str());
+      (char*)sTargetMask.c_str());
 
   ImageUtils::Instance()->LoadImageFromFile(objects[objectIdx]->histSources[viewIdx],
-                                            (char*)sHistSrc.c_str());
+      (char*)sHistSrc.c_str());
 
   ImageUtils::Instance()->LoadImageFromFile(objects[objectIdx]->histMasks[viewIdx],
-                                            (char*)sHistMask.c_str(), objectIdx+1);
+      (char*)sHistMask.c_str(), objectIdx+1);
 
   HistogramEngine::Instance()->UpdateVarBinHistogram(
-        objects[objectIdx], views[viewIdx], objects[objectIdx]->histSources[viewIdx],
-        objects[objectIdx]->histMasks[viewIdx], views[viewIdx]->videoMask);
-
+      objects[objectIdx], views[viewIdx], objects[objectIdx]->histSources[viewIdx],
+      objects[objectIdx]->histMasks[viewIdx], views[viewIdx]->videoMask);
 
   // ---------------------------------------------------------------------------
   //iteration configuration for one object
@@ -120,9 +103,9 @@ int main(int argc, char** argv)
   // ---------------------------------------------------------------------------
   std::cout<<"\n==[APP] Rendering object initial pose.. =="<<std::endl;
   VisualisationEngine::Instance()->GetImage(
-        ResultImage, GETIMAGE_PROXIMITY,
-        objects[objectIdx], views[viewIdx],
-        objects[objectIdx]->initialPose[viewIdx]);
+      ResultImage, GETIMAGE_PROXIMITY,
+      objects[objectIdx], views[viewIdx],
+      objects[objectIdx]->initialPose[viewIdx]);
 
   cv::Mat ResultMat(height,width,CV_8UC4, ResultImage->pixels);
   cv::imshow("initial pose", ResultMat);
@@ -130,30 +113,30 @@ int main(int argc, char** argv)
 
   std::cout<<"[App] Finish Rendered object initial pose."<<std::endl;
   const int maxIterations = 32;
-  for (i=0; i < maxIterations; i++)
+  for (i = 0; i < maxIterations; ++i)
   {
     switch (i % 4)
     {
-    case 0:
-      iterConfig->useCUDAEF = true;
-      iterConfig->useCUDARender = true;
-      break;
-    case 1:
-      iterConfig->useCUDAEF = false;
-      iterConfig->useCUDARender = true;
-      break;
-    case 2:
-      iterConfig->useCUDAEF = true;
-      iterConfig->useCUDARender = false;
-      break;
-    case 3:
-      iterConfig->useCUDAEF = false;
-      iterConfig->useCUDARender = false;
-      break;
+      case 0:
+        iterConfig->useCUDAEF = true;
+        iterConfig->useCUDARender = true;
+        break;
+      case 1:
+        iterConfig->useCUDAEF = false;
+        iterConfig->useCUDARender = true;
+        break;
+      case 2:
+        iterConfig->useCUDAEF = true;
+        iterConfig->useCUDARender = false;
+        break;
+      case 3:
+        iterConfig->useCUDAEF = false;
+        iterConfig->useCUDARender = false;
+        break;
     }
 
     printf("======= mode: useCUDAAEF: %d, use CUDARender %d ========;\n",
-           iterConfig->useCUDAEF, iterConfig->useCUDARender);
+        iterConfig->useCUDAEF, iterConfig->useCUDARender);
 
     sprintf(str, "Files/Results/result%04d.png", i);
 
@@ -164,29 +147,29 @@ int main(int argc, char** argv)
 
     //result plot
     VisualisationEngine::Instance()->GetImage(
-          ResultImage, GETIMAGE_PROXIMITY,
-          objects[objectIdx], views[viewIdx], objects[objectIdx]->pose[viewIdx]);
+        ResultImage, GETIMAGE_PROXIMITY,
+        objects[objectIdx], views[viewIdx], objects[objectIdx]->pose[viewIdx]);
 
     //result save to file
     //    ImageUtils::Instance()->SaveImageToFile(result, str);
     cv::Mat ResultMat(height,width,CV_8UC4, ResultImage->pixels);
-    cv::imwrite(str, ResultMat);
+    //cv::imwrite(str, ResultMat);
 
     printf("final pose result %f %f %f %f %f %f %f\n\n",
-           objects[objectIdx]->pose[viewIdx]->translation->x,
-           objects[objectIdx]->pose[viewIdx]->translation->y,
-           objects[objectIdx]->pose[viewIdx]->translation->z,
-           objects[objectIdx]->pose[viewIdx]->rotation->vector4d.x,
-           objects[objectIdx]->pose[viewIdx]->rotation->vector4d.y,
-           objects[objectIdx]->pose[viewIdx]->rotation->vector4d.z,
-           objects[objectIdx]->pose[viewIdx]->rotation->vector4d.w);
+        objects[objectIdx]->pose[viewIdx]->translation->x,
+        objects[objectIdx]->pose[viewIdx]->translation->y,
+        objects[objectIdx]->pose[viewIdx]->translation->z,
+        objects[objectIdx]->pose[viewIdx]->rotation->vector4d.x,
+        objects[objectIdx]->pose[viewIdx]->rotation->vector4d.y,
+        objects[objectIdx]->pose[viewIdx]->rotation->vector4d.z,
+        objects[objectIdx]->pose[viewIdx]->rotation->vector4d.w);
   }
 
   //posteriors plot
   sprintf(str, "Files/Results/posteriors.png");
   VisualisationEngine::Instance()->GetImage(
-        ResultImage, GETIMAGE_POSTERIORS,
-        objects[objectIdx], views[viewIdx], objects[objectIdx]->pose[viewIdx]);
+      ResultImage, GETIMAGE_POSTERIORS,
+      objects[objectIdx], views[viewIdx], objects[objectIdx]->pose[viewIdx]);
 
   ImageUtils::Instance()->SaveImageToFile(ResultImage, str);
 
@@ -194,10 +177,10 @@ int main(int argc, char** argv)
   OptimisationEngine::Instance()->Shutdown();
 
   for (i = 0; i<objectCount; i++) delete objects[i];
-  delete objects;
+  delete[] objects;
 
   for (i = 0; i<viewCount; i++) delete views[i];
-  delete views;
+  delete[] views;
 
   delete ResultImage;
 
